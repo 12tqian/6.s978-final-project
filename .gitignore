@@ -1,0 +1,6 @@
+latent_image_dataset/
+data/
+models/
+__pycache__/
+# .pth files
+*.pth
