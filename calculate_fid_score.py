@@ -5,6 +5,7 @@ from torchvision.models import inception_v3
 from scipy.stats import entropy
 from torchvision.utils import make_grid
 
+
 # Function to preprocess MNIST images for Inception-v3
 def preprocess_for_inception(images):
     # Rescale images to 299x299 and convert to RGB
@@ -12,8 +13,11 @@ def preprocess_for_inception(images):
     images = images.repeat(1, 3, 1, 1)  # Convert grayscale to RGB
     return images
 
+
 # Function to compute Inception Score
-def compute_inception_score(generator, num_samples=5000, batch_size=32, splits=10, device='cuda'):
+def compute_inception_score(
+    generator, num_samples=5000, batch_size=32, splits=10, device="cuda"
+):
     """
     Computes the Inception Score for a generative model.
     - generator: the generative model that generates MNIST images
@@ -31,7 +35,9 @@ def compute_inception_score(generator, num_samples=5000, batch_size=32, splits=1
     with torch.no_grad():
         for _ in range(num_samples // batch_size):
             # Generate images
-            noise = torch.randn(batch_size, generator.latent_dim).to(device)  # Assuming latent_dim exists
+            noise = torch.randn(batch_size, generator.latent_dim).to(
+                device
+            )  # Assuming latent_dim exists
             fake_images = generator(noise)
             fake_images = preprocess_for_inception(fake_images)
 
@@ -44,15 +50,19 @@ def compute_inception_score(generator, num_samples=5000, batch_size=32, splits=1
     # Compute Inception Score
     split_scores = []
     for k in range(splits):
-        part = all_preds[k * (num_samples // splits): (k + 1) * (num_samples // splits)]
+        part = all_preds[
+            k * (num_samples // splits) : (k + 1) * (num_samples // splits)
+        ]
         py = np.mean(part, axis=0)
         scores = [entropy(p, py) for p in part]
         split_scores.append(np.exp(np.mean(scores)))
 
     return np.mean(split_scores), np.std(split_scores)
 
+
 # Example usage:
 if __name__ == "__main__":
+
     class SimpleGenerator(torch.nn.Module):
         # Define a simple generator for demonstration
         def __init__(self, latent_dim):
@@ -62,7 +72,7 @@ if __name__ == "__main__":
                 torch.nn.Linear(latent_dim, 256),
                 torch.nn.ReLU(),
                 torch.nn.Linear(256, 28 * 28),
-                torch.nn.Tanh()
+                torch.nn.Tanh(),
             )
 
         def forward(self, z):
@@ -72,9 +82,11 @@ if __name__ == "__main__":
 
     # Instantiate generator and compute IS
     latent_dim = 100
-    generator = SimpleGenerator(latent_dim).to('cuda')
+    generator = SimpleGenerator(latent_dim).to("cuda")
     generator.eval()
 
     # Generate Inception Score
-    is_mean, is_std = compute_inception_score(generator, num_samples=1000, batch_size=32, splits=5, device='cuda')
+    is_mean, is_std = compute_inception_score(
+        generator, num_samples=1000, batch_size=32, splits=5, device="cuda"
+    )
     print(f"Inception Score: {is_mean:.2f} ± {is_std:.2f}")

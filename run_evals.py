@@ -230,13 +230,22 @@ def preprocess_for_inception(images):
     return images
 
 
-def generate_batch(v_edm, batch_size: int, n_steps=18, n_steps_1=None, n_steps_2=None, clamp=False):
+def generate_batch(
+    v_edm, batch_size: int, n_steps=18, n_steps_1=None, n_steps_2=None, clamp=False
+):
 
     x_T = torch.randn([batch_size, 1, 28, 28], device=device)
     # random from 0 to 9 inclusive
     c = torch.randint(0, 10, (batch_size,), device=device)
     x_gen, _, c = v_edm_sampler(
-        v_edm, x_T, class_labels=c, guide_w=4.5, suppress_print=True, num_steps=n_steps, n_steps_1=n_steps_1, n_steps_2=n_steps_2
+        v_edm,
+        x_T,
+        class_labels=c,
+        guide_w=4.5,
+        suppress_print=True,
+        num_steps=n_steps,
+        n_steps_1=n_steps_1,
+        n_steps_2=n_steps_2,
     )
     if clamp:
         x_gen = (x_gen / 2 + 0.5).clamp(0, 1)
@@ -313,7 +322,12 @@ def get_is(model_path: Path = Path("edm_model_checkpoint.pth"), gen_func=None):
     v_edm = get_model(model_path)
 
     is_mean, is_std = compute_inception_score(
-        v_edm, gen_func, num_samples=1000, batch_size=1000, splits=5, device="cuda", 
+        v_edm,
+        gen_func,
+        num_samples=1000,
+        batch_size=1000,
+        splits=5,
+        device="cuda",
     )
     return is_mean, is_std
 
@@ -417,12 +431,15 @@ def get_fid(model_path: Path, gen_func, n_samples=1000):
     return fid
 
 
-def compute_metrics(model_path: Path, n_steps_1, n_steps_2, n_samples=10000, clamp=False):
-    gen_func = partial(generate_batch, n_steps_1=n_steps_1, n_steps_2=n_steps_2, clamp=clamp)
+def compute_metrics(
+    model_path: Path, n_steps_1, n_steps_2, n_samples=10000, clamp=False
+):
+    gen_func = partial(
+        generate_batch, n_steps_1=n_steps_1, n_steps_2=n_steps_2, clamp=clamp
+    )
     is_mean, is_std = get_is(model_path, gen_func)
     fid = get_fid(model_path, gen_func, n_samples=n_samples)
     return is_mean, is_std, fid
-
 
 
 def main():
@@ -443,7 +460,9 @@ def main():
     for model_file in model_files:
         for config in configs:
             n_steps_1, n_steps_2 = config
-            is_mean, is_std, fid = compute_metrics(model_file, n_steps_1, n_steps_2, clamp=clamp, n_samples=n_samples)
+            is_mean, is_std, fid = compute_metrics(
+                model_file, n_steps_1, n_steps_2, clamp=clamp, n_samples=n_samples
+            )
             results_list.append(
                 {
                     "Model": model_file,
@@ -457,7 +476,6 @@ def main():
     results_df = pd.DataFrame(results_list)
     results_df.to_csv("results.csv")
 
+
 if __name__ == "__main__":
     main()
-
-
